@@ -1,0 +1,21 @@
+pipeline {
+   agent any 
+stages {
+      stage('checkout scm') {
+        steps {
+         }
+      }
+     stage {
+       parllel {
+          stage {
+            steps {
+             }
+          }
+          stage {
+            steps {
+            }
+          }
+       }
+       }
+     }
+   }
