@@ -1,1 +1,62 @@
-
+pipeline {
+    agent any  // Run on any available agent/node
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clone the repo from Git (this runs sequentially first)
+                checkout scm
+            }
+        }
+        
+        stage('Parallel Build & Test') {
+            parallel {
+                // Branch 1: Build
+                stage('Build') {
+                    steps {
+                        // Example: Build with Maven
+                        sh 'mvn clean compile'
+                    }
+                }
+                
+                // Branch 2: Test (runs in parallel with Build)
+                stage('Test') {
+                    steps {
+                        // Run unit tests
+                        sh 'mvn test'
+                    }
+                    post {
+                        always {
+                            // Publish test results
+                            junit '**/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                // Only deploy if both parallel stages succeed
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                // Example: Deploy to staging
+                sh 'mvn deploy -Denv=staging'
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean up workspace
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded! 🎉'
+        }
+        failure {
+            echo 'Pipeline failed! 😞'
+        }
+    }
+}
